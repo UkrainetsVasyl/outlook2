@@ -30,6 +30,15 @@ module.exports = async (env, options) => {
     module: {
       rules: [
         {
+          test: /\.xml$/,
+          use: {
+            loader: "webpack-xml-loader",
+            options: {
+              explicitArray: false,
+            },
+          },
+        },
+        {
           test: /\.js$/,
           exclude: /node_modules/,
           use: {
