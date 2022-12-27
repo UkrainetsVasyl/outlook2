@@ -32,21 +32,21 @@ const Messages = {
 
 Office.initialize = () => {
   Office.onReady(function () {
-      Office.context.mailbox.addHandlerAsync(
-          Office.EventType.ItemChanged,
-          loadNewItem,
-          function (result) {
-              if (result.status === Office.AsyncResultStatus.Failed) {
-                  // Handle error.
-              }
-          });
+    Office.context.mailbox.addHandlerAsync(
+      Office.EventType.ItemChanged,
+      loadNewItem,
+      function (result) {
+        if (result.status === Office.AsyncResultStatus.Failed) {
+          // Handle error.
+        }
+      });
   });
 };
 
 function loadNewItem() {
   const item = Office.context.mailbox.item;
   if (item !== null) {
-      console.log(item);
+    console.log(item);
   }
 }
 
@@ -108,11 +108,11 @@ function openNewMessage() {
 }
 
 function replyMessage() {
-  Office.context.mailbox.item.displayReplyForm("hello there");
+  Office.context.mailbox.item.displayReplyForm({});
 }
 
 function replyMessagesAll() {
-  Office.context.mailbox.item.displayReplyAllForm("hello there");
+  Office.context.mailbox.item.displayReplyAllForm({});
 }
 
 async function forwardMessage() {
@@ -125,14 +125,14 @@ async function forwardMessage() {
   console.log(body)
   Office.context.mailbox.item.displayReplyForm({
     htmlBody: "",
-    "attachments" :
-    [
+    "attachments":
+      [
         {
-            "type" : "item",
-            "name" : "rand",
-            "itemId" : Office.context.mailbox.item.itemId
+          "type": "item",
+          "name": "rand",
+          "itemId": Office.context.mailbox.item.itemId
         }
-    ]
+      ]
   });
 }
 
@@ -169,7 +169,44 @@ async function makeEWS() {
 }
 
 async function downloadAttachments() {
-  item.getAttachmentContentAsync(item.attachments[0].id, {}, res => {
-    console.log(res);
+  const item = Office.context.mailbox.item;
+  item.attachments?.forEach(attachment => {
+    console.log(attachment)
+    item.getAttachmentContentAsync(attachment.id, {}, (res) => handleAttachmentsCallback(attachment, res));
   });
+
+  function handleFileAttachment(data, type, name) {
+    // console.log(data);
+    downloadBase64File(data, type, name);
+  }
+
+
+  function downloadBase64File(base64Data, contentType, fileName) {
+    const linkSource = `data:${contentType};base64,${base64Data}`;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = linkSource;
+    downloadLink.download = fileName;
+    downloadLink.click();
+  }
+
+  function handleAttachmentsCallback(fileDescription, result) {
+    console.log(result)
+    // Parse string to be a url, an .eml file, a base64-encoded string, or an .icalendar file.
+    switch (result.value.format) {
+      case Office.MailboxEnums.AttachmentContentFormat.Base64:
+        handleFileAttachment(result.value.content, fileDescription.contentType, fileDescription.name);
+        break;
+      case Office.MailboxEnums.AttachmentContentFormat.Eml:
+        // Handle email item attachment.
+        break;
+      case Office.MailboxEnums.AttachmentContentFormat.ICalendar:
+        // Handle .icalender attachment.
+        break;
+      case Office.MailboxEnums.AttachmentContentFormat.Url:
+        // Handle cloud attachment.
+        break;
+      default:
+      // Handle attachment formats that are not supported.
+    }
+  }
 }
