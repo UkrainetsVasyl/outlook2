@@ -1,88 +1,36 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable no-undef */
+/* eslint-disable office-addins/no-office-initialize */
+import getSubject from "../exchangeXML/getSubject.xml";
+import getRoot from "../exchangeXML/getRoot.xml";
+import createFolder from "../exchangeXML/generateFolder.xml";
+
 let webSocket = null;
 
-
-function getSubjectRequest(id) {
-  // Return a GetItem operation request for the subject of the specified item. 
-  const result =
-    '<?xml version="1.0" encoding="utf-8"?>' +
-    '<soap:Envelope xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"' +
-    '      xmlns:xsd="https://www.w3.org/2001/XMLSchema"' +
-    '               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"' +
-    '               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">' +
-    '  <soap:Header>' +
-    '    <RequestServerVersion Version="Exchange2013" xmlns="http://schemas.microsoft.com/exchange/services/2006/types" soap:mustUnderstand="0" />' +
-    '  </soap:Header>' +
-    '  <soap:Body>' +
-    '    <GetItem xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">' +
-    '      <ItemShape>' +
-    '  <t:BaseShape>IdOnly</t:BaseShape>' +
-    '        <t:AdditionalProperties>' +
-    '      <t:FieldURI FieldURI="item:Subject"/>' +
-    '        </t:AdditionalProperties>' +
-    '      </ItemShape>' +
-    '      <ItemIds><t:ItemId Id="' + id + '"/></ItemIds>' +
-    '    </GetItem>' +
-    '  </soap:Body>' +
-    '</soap:Envelope>';
-
-  return result;
+function getSubjectRequest() {
+  return getSubject;
 }
 
 function getRootFoulder() {
-  const result = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-   xmlns:t="https://schemas.microsoft.com/exchange/services/2006/types">
-  <soap:Body>
-    <GetFolder xmlns="https://schemas.microsoft.com/exchange/services/2006/messages"
-               xmlns:t="https://schemas.microsoft.com/exchange/services/2006/types">
-      <FolderShape>
-        <t:BaseShape>Default</t:BaseShape>
-      </FolderShape>
-      <FolderIds>
-        <t:DistinguishedFolderId Id="inbox"/>
-      </FolderIds>
-    </GetFolder>
-  </soap:Body>
-</soap:Envelope>`;
-
-  return result;
+  return getRoot;
 }
 
-function generateFoulder(id) {
-  return `<?xml version="1.0" encoding="utf-8"?>
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-          xmlns:t="https://schemas.microsoft.com/exchange/services/2006/types">
-      <soap:Body>
-        <CreateFolder xmlns="https://schemas.microsoft.com/exchange/services/2006/messages">
-          <ParentFolderId>
-            <t:DistinguishedFolderId Id="inbox"/>
-          </ParentFolderId>
-          <Folders>
-            <t:Folder>
-              <t:DisplayName>Folder1</t:DisplayName>
-            </t:Folder>
-            <t:Folder>
-              <t:DisplayName>Folder2</t:DisplayName>
-            </t:Folder>
-          </Folders>
-        </CreateFolder>
-      </soap:Body>
-    </soap:Envelope>
-  `;
+function generateFolder() {
+  return createFolder;
 }
 
 const Messages = {
-  newMessage: 'new_message',
-  reply: 'reply_to',
-  replyAll: 'reply_to_all',
-  forward: 'forward_to',
-  tag: 'tag_message',
-  untag: 'untag_message',
-  createFoulder: 'create_foulder',
-  downloadAttachments: 'download_attachments'
-}
+  newMessage: "new_message",
+  reply: "reply_to",
+  replyAll: "reply_to_all",
+  forward: "forward_to",
+  tag: "tag_message",
+  untag: "untag_message",
+  createFoulder: "create_foulder",
+  downloadAttachments: "download_attachments",
+};
 
-Office.initialize = function (reason) {
+Office.initialize = () => {
   Office.onReady(function () {
       Office.context.mailbox.addHandlerAsync(
           Office.EventType.ItemChanged,
@@ -95,51 +43,64 @@ Office.initialize = function (reason) {
   });
 };
 
-function loadNewItem(eventArgs) {
+function loadNewItem() {
   const item = Office.context.mailbox.item;
-  console.log(item)
-  // Check that item is not null.
   if (item !== null) {
-      // Work with item, e.g., define and call function that
-      // loads the properties of the newly selected item.
       console.log(item);
   }
 }
 
 Office.onReady((info) => {
-  webSocket = new WebSocket('ws://localhost:9000');
+  webSocket = new WebSocket("ws://localhost:9000");
 
   run();
 
   if (info.host === Office.HostType.Outlook) {
-    document.getElementById('sideload-msg').style.display = 'none';
-    document.getElementById('app-body').style.display = 'flex';
-    // document.getElementById('run').onclick = displayData;
+    document.getElementById("sideload-msg").style.display = "none";
+    document.getElementById("app-body").style.display = "flex";
+    // document.getElementById("run").onclick = displayData;
   }
 });
 
 export async function run() {
   webSocket.onopen = function () {
-    console.log('connected');
+    console.log("connected");
   };
 
   webSocket.onmessage = function (message) {
     switch (message.data) {
-      case Messages.newMessage: openNewMessage(); break;
-      case Messages.reply: replyMessage(); break;
-      case Messages.replyAll: replyMessagesAll(); break;
-      case Messages.forward: forwardMessage(); break;
-      case Messages.tag: tagMessage(); break;
-      case Messages.untag: untagMessage(); break;
-      case Messages.createFoulder: createFoulder(); break;
-      case Messages.downloadAttachments: downloadAttachments(); break;
-      default: logMessage(message.data);
+      case Messages.newMessage:
+        openNewMessage();
+        break;
+      case Messages.reply:
+        replyMessage();
+        break;
+      case Messages.replyAll:
+        replyMessagesAll();
+        break;
+      case Messages.forward:
+        forwardMessage();
+        break;
+      case Messages.tag:
+        tagMessage();
+        break;
+      case Messages.untag:
+        untagMessage();
+        break;
+      case Messages.createFoulder:
+        makeEWS();
+        break;
+      case Messages.downloadAttachments:
+        downloadAttachments();
+        break;
+      default:
+        logMessage(message.data);
     }
   };
 }
 
 function logMessage(message) {
-  console.log('Message: %s', message.data);
+  console.log("Message: %s", message.data);
 }
 
 function openNewMessage() {
@@ -147,11 +108,11 @@ function openNewMessage() {
 }
 
 function replyMessage() {
-  Office.context.mailbox.item.displayReplyForm('hello there');
+  Office.context.mailbox.item.displayReplyForm("hello there");
 }
 
 function replyMessagesAll() {
-  Office.context.mailbox.item.displayReplyAllForm('hello there');
+  Office.context.mailbox.item.displayReplyAllForm("hello there");
 }
 
 async function forwardMessage() {
@@ -163,13 +124,13 @@ async function forwardMessage() {
   });
   console.log(body)
   Office.context.mailbox.item.displayReplyForm({
-    htmlBody: '',
-    'attachments' :
+    htmlBody: "",
+    "attachments" :
     [
         {
-            'type' : 'item',
-            'name' : 'rand',
-            'itemId' : Office.context.mailbox.item.itemId
+            "type" : "item",
+            "name" : "rand",
+            "itemId" : Office.context.mailbox.item.itemId
         }
     ]
   });
@@ -195,51 +156,20 @@ async function untagMessage() {
   Office.context.mailbox.item.categories.removeAsync([categories[0].displayName]);
 }
 
-async function createFoulder() {
-  // Office.context.mailbox.makeEwsRequestAsync(getSubjectRequest(Office.context.mailbox.item.itemId), (data) => {
-  //   console.log(new DOMParser().parseFromString(data.value, 'text/xml'));
-  //   // console.log(JSON.parse(data.value));
-  // });
-  // console.log(foulderxml);
+async function makeEWS() {
+  Office.context.mailbox.makeEwsRequestAsync(getSubjectRequest(), (data) => {
+    console.log(new DOMParser().parseFromString(data.value, "text/xml"));
+  });
   Office.context.mailbox.makeEwsRequestAsync(getRootFoulder(), (data) => {
-    console.log(data.value)
-    // console.log(new DOMParser().parseFromString(data.value, 'text/xml'));
+    console.log(new DOMParser().parseFromString(data.value, "text/xml"));
+  });
+  Office.context.mailbox.makeEwsRequestAsync(generateFolder(), (data) => {
+    console.log(new DOMParser().parseFromString(data.value, "text/xml"));
   });
 }
-
-// async function createFoulder() {
-//   var item = Office.context.mailbox.item;
-//   //@ts-ignore
-//   easyEws.getMailItem(item.id, (ids) => {
-//     console.log(ids); 
-//   });
-// }
 
 async function downloadAttachments() {
-  const item = Office.context.mailbox.item;
-  // console.log(item.getSelectedEntities())
-  // console.log(item.attachments[0]);
-  console.log(Office.context.mailbox.item.body)
-  Office.context.mailbox.item.body.getTypeAsync(data => {
-    console.log(data)
+  item.getAttachmentContentAsync(item.attachments[0].id, {}, res => {
+    console.log(res);
   });
-  console.log(Office.context.document.getSelectedResourceAsync((result) => {
-    console.log(result)
-  }));
-  // Office.context.mailbox.item.close()
-  // item.getAttachmentContentAsync(item.attachments[0].id, {}, res => {
-  //   console.log(res);
-  // });
-}
-
-function itemChanged(eventArgs) {
-  // Update UI based on the new current item
-  UpdateTaskPaneUI(Office.context.mailbox.item);
-}
-
-function UpdateTaskPaneUI(item)
-{
-  console.log(item)
-  // Assuming that item is always a read item (instead of a compose item).
-  if (item != null) console.log(item.subject);
 }
