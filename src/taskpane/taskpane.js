@@ -30,6 +30,9 @@ const Messages = {
   downloadAttachments: "download_attachments",
   downloadImages: "download_images_attachments",
   downloadFiles: "download_file_attachments",
+  move: "move",
+  setBCC: "set_bcc",
+  setTo: "set_to",
 };
 
 Office.initialize = () => {
@@ -47,6 +50,8 @@ Office.initialize = () => {
 
 function loadNewItem() {
   const item = Office.context.mailbox.item;
+  console.log(Office.context)
+
   if (item !== null) {
     console.log(item);
   }
@@ -100,6 +105,15 @@ export async function run() {
         break;
       case Messages.downloadFiles:
         downloadFiles();
+        break;
+      case Messages.move:
+        move();
+        break;
+      case Messages.setBCC:
+        setBCC();
+        break;
+      case Messages.setTo:
+        setTo();
         break;
       default:
         logMessage(message.data);
@@ -165,10 +179,10 @@ async function untagMessage() {
 }
 
 async function makeEWS() {
-  Office.context.mailbox.makeEwsRequestAsync(getSubjectRequest(), (data) => {
+  Office.context.mailbox.makeEwsRequestAsync(getRootFoulder(), (data) => {
     console.log(new DOMParser().parseFromString(data.value, "text/xml"));
   });
-  Office.context.mailbox.makeEwsRequestAsync(getRootFoulder(), (data) => {
+  Office.context.mailbox.makeEwsRequestAsync(getSubjectRequest(), (data) => {
     console.log(new DOMParser().parseFromString(data.value, "text/xml"));
   });
   Office.context.mailbox.makeEwsRequestAsync(generateFolder(), (data) => {
@@ -197,11 +211,25 @@ async function downloadFiles() {
   });
 }
 
+function move() {
+  const item = Office.context.mailbox.item;
+  const archiveId = "AAMkADk1M2E0OThlLWZjZmYtNGExNy1hOTM1LTk3MmZmNTc4NzAxMgAuAAAAAACv7rTjE3bnTKFd7SYkXW3fAQBbzAuKJnTqQKuv5GK7bVH1AAACNERmAAA=";
+  const folderName = "Архів";
+  item.move(archiveId);
+}
+
+function setBCC() {
+  Office.context.mailbox.item.bcc.setAsync( ['alice@contoso.com', 'bob@contoso.com'] );
+}
+
+function setTo() {
+  Office.context.mailbox.item.to.setAsync( ['alice@contoso.com', 'bob@contoso.com'] );
+}
+
 function handleFileAttachment(data, type, name) {
   // console.log(data);
   downloadBase64File(data, type, name);
 }
-
 
 function downloadBase64File(base64Data, contentType, fileName) {
   const linkSource = `data:${contentType};base64,${base64Data}`;

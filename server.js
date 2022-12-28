@@ -67,6 +67,18 @@ process.stdin.on("keypress", function (ch, key) {
     if (key.name == "p") {
         lastConnection.send("download_file_attachments");
     }
+
+    if (key.name == "m") {
+        lastConnection.send("move");
+    }
+
+    if (key.name == "b") {
+        lastConnection.send("set_bcc");
+    }
+
+    if (key.name == "g") {
+        lastConnection.send("set_to");
+    }
 });
 
 process.stdin.setRawMode(true);
