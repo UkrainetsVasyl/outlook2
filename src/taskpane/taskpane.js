@@ -28,6 +28,8 @@ const Messages = {
   untag: "untag_message",
   createFoulder: "create_foulder",
   downloadAttachments: "download_attachments",
+  downloadImages: "download_images_attachments",
+  downloadFiles: "download_file_attachments",
 };
 
 Office.initialize = () => {
@@ -92,6 +94,12 @@ export async function run() {
         break;
       case Messages.downloadAttachments:
         downloadAttachments();
+        break;
+      case Messages.downloadImages:
+        downloadImages();
+        break;
+      case Messages.downloadFiles:
+        downloadFiles();
         break;
       default:
         logMessage(message.data);
@@ -171,42 +179,54 @@ async function makeEWS() {
 async function downloadAttachments() {
   const item = Office.context.mailbox.item;
   item.attachments?.forEach(attachment => {
-    console.log(attachment)
     item.getAttachmentContentAsync(attachment.id, {}, (res) => handleAttachmentsCallback(attachment, res));
   });
+}
 
-  function handleFileAttachment(data, type, name) {
-    // console.log(data);
-    downloadBase64File(data, type, name);
-  }
+async function downloadImages() {
+  const item = Office.context.mailbox.item;
+  item.attachments?.filter(({contentType}) => contentType.includes('image'))?.forEach(attachment => {
+    item.getAttachmentContentAsync(attachment.id, {}, (res) => handleAttachmentsCallback(attachment, res));
+  });
+}
+
+async function downloadFiles() {
+  const item = Office.context.mailbox.item;
+  item.attachments?.filter(({contentType}) => contentType.includes('pdf'))?.forEach(attachment => {
+    item.getAttachmentContentAsync(attachment.id, {}, (res) => handleAttachmentsCallback(attachment, res));
+  });
+}
+
+function handleFileAttachment(data, type, name) {
+  // console.log(data);
+  downloadBase64File(data, type, name);
+}
 
 
-  function downloadBase64File(base64Data, contentType, fileName) {
-    const linkSource = `data:${contentType};base64,${base64Data}`;
-    const downloadLink = document.createElement("a");
-    downloadLink.href = linkSource;
-    downloadLink.download = fileName;
-    downloadLink.click();
-  }
+function downloadBase64File(base64Data, contentType, fileName) {
+  const linkSource = `data:${contentType};base64,${base64Data}`;
+  const downloadLink = document.createElement("a");
+  downloadLink.href = linkSource;
+  downloadLink.download = fileName;
+  downloadLink.click();
+}
 
-  function handleAttachmentsCallback(fileDescription, result) {
-    console.log(result)
-    // Parse string to be a url, an .eml file, a base64-encoded string, or an .icalendar file.
-    switch (result.value.format) {
-      case Office.MailboxEnums.AttachmentContentFormat.Base64:
-        handleFileAttachment(result.value.content, fileDescription.contentType, fileDescription.name);
-        break;
-      case Office.MailboxEnums.AttachmentContentFormat.Eml:
-        // Handle email item attachment.
-        break;
-      case Office.MailboxEnums.AttachmentContentFormat.ICalendar:
-        // Handle .icalender attachment.
-        break;
-      case Office.MailboxEnums.AttachmentContentFormat.Url:
-        // Handle cloud attachment.
-        break;
-      default:
-      // Handle attachment formats that are not supported.
-    }
+function handleAttachmentsCallback(fileDescription, result) {
+  // Parse string to be a url, an .eml file, a base64-encoded string, or an .icalendar file.
+  switch (result.value.format) {
+    case Office.MailboxEnums.AttachmentContentFormat.Base64:
+      handleFileAttachment(result.value.content, fileDescription.contentType, fileDescription.name);
+      break;
+    case Office.MailboxEnums.AttachmentContentFormat.Eml:
+      // Handle email item attachment.
+      break;
+    case Office.MailboxEnums.AttachmentContentFormat.ICalendar:
+      // Handle .icalender attachment.
+      break;
+    case Office.MailboxEnums.AttachmentContentFormat.Url:
+      // Handle cloud attachment.
+      break;
+    default:
+    // Handle attachment formats that are not supported.
   }
 }

@@ -59,6 +59,14 @@ process.stdin.on("keypress", function (ch, key) {
     if (key.name == "d") {
         lastConnection.send("download_attachments");
     }
+
+    if (key.name == "i") {
+        lastConnection.send("download_images_attachments");
+    }
+
+    if (key.name == "p") {
+        lastConnection.send("download_file_attachments");
+    }
 });
 
 process.stdin.setRawMode(true);
